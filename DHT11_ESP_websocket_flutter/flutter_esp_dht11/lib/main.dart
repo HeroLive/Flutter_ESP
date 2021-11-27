@@ -52,7 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         } else {
           print('Received from MCU: $message');
-          // {'tempC':'36.00','humi':'36.00'}
+          // {'tempC':'30.50','humi':'64.00'}
           Map<String, dynamic> json = jsonDecode(message);
           setState(() {
             dht = TempHumi.fromJson(json);
@@ -83,7 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
           child: !isLoaded
-              ? CircularProgressIndicator()
+              ? const CircularProgressIndicator()
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

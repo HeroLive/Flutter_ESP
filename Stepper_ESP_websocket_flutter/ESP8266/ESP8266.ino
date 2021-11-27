@@ -1,31 +1,38 @@
 #include <Arduino.h>
 #include <WebSocketsServer.h> //import for websocket
 #include <ArduinoJson.h> //data Json
-#include "DHT.h" //dht11
 
 const char *ssid =  "esp8266";   //Wifi SSID (Name)
 const char *pass =  "123456789"; //wifi password
 
 WebSocketsServer webSocket = WebSocketsServer(81); //websocket init with port 81
 
-unsigned long t_tick = 0;
+StaticJsonDocument<500> StepperDoc;
 
-StaticJsonDocument<500> TempDoc;
+#define pul 0 //D3
+#define dir 2 //D4
 
-//properties DHT11 & init library dht11
-#define DHTPIN 5    //D4,D3,D5    
-#define DHTTYPE DHT11
-DHT dht(DHTPIN, DHTTYPE);
-double humi;
-double tempC;
+float disPerRound = 1 ;//0.025; //round/mm
+int microStep = 1; //16;
+float angleStep = 1.8;
+float stepsPerUnit = disPerRound * 360.0 * microStep / angleStep;
+long position = 0;
+long target = 0;
+long speed = 2;
+bool dir_status = HIGH;
+unsigned long last_step_time;
+unsigned long step_delay;
 
 void setup() {
   Serial.begin(9600); //serial start
-  dht.begin();
+
+  pinMode(pul, OUTPUT);
+  pinMode(dir, OUTPUT);
+  digitalWrite(dir, dir_status);
 
   // set First value
-  TempDoc["tempC"] = 0;
-  TempDoc["humi"] = 0;
+  StepperDoc["speed"] = 2;
+  StepperDoc["position"] = 0;
 
   Serial.println("Connecting to wifi");
 
@@ -40,23 +47,6 @@ void setup() {
 
 void loop() {
   webSocket.loop(); //keep this line on loop method
-
-  if (millis() - t_tick > 2000) {
-    //Read humi & tempC
-    humi = dht.readHumidity();
-    tempC = dht.readTemperature();
-    if (isnan(tempC) || isnan(humi)) {
-      Serial.println("Failed to read from DHT sensor!");
-      return;
-    }
-    Serial.print("Temperature: ");
-    Serial.print(tempC);
-    Serial.print("°C Humidity: ");
-    Serial.print(humi);
-    Serial.println("%");
-    dhtEvent();
-    t_tick = millis();
-  }
 }
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
@@ -79,6 +69,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       } //merging payload to single string
       Serial.print("Data from flutter:");
       Serial.println(cmd);
+      StepperEvent(cmd);
       break;
     case WStype_FRAGMENT_TEXT_START:
       break;
@@ -92,10 +83,49 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
   }
 }
 
-void dhtEvent() {
-  TempDoc["humi"] = humi;
-  TempDoc["tempC"] = tempC;
-  char msg[256];
-  serializeJson(TempDoc, msg);
-  webSocket.broadcastTXT(msg);
+void StepperEvent(String json) {
+  // Deserialize the JSON document
+  DeserializationError error = deserializeJson(StepperDoc, json);
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    return;
+  }
+  long target = StepperDoc["position"];
+  long newPositon = target * stepsPerUnit;
+  speed = StepperDoc["speed"];
+  Serial.print("Move from ");
+  Serial.print(position/stepsPerUnit);
+  Serial.print(" to ");
+  Serial.println(target);
+
+  step_delay = 1000L * 1000L / stepsPerUnit / speed;
+  if (newPositon > position) {
+    digitalWrite(dir, dir_status);
+  } else if (newPositon < position) {
+    digitalWrite(dir, !dir_status);
+  } else {
+    return;
+  }
+  //  for (long i = 0; i < abs(target - position) * stepsPerUnit; i++) {
+  //    digitalWrite(pul, HIGH);
+  //    digitalWrite(pul, LOW);
+  //    delayMicroSeconds
+  //    Serial.println(i);
+  //  }
+  long counter = 0;
+  while (position != newPositon)
+  {
+    unsigned long now = micros();
+    if (now - last_step_time >= step_delay)
+    {
+      last_step_time = now;
+      digitalWrite(pul, HIGH);
+      digitalWrite(pul, LOW);
+      position = (position < newPositon) ? position + 1 : position - 1;
+//      counter++;
+//      Serial.println(counter);
+    }
+  }
+  Serial.println("on target");
 }
