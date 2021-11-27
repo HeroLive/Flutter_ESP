@@ -52,6 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         } else {
           print('Received from MCU: $message');
+          // {'tempC':'36.00','humi':'36.00'}
           Map<String, dynamic> json = jsonDecode(message);
           setState(() {
             dht = TempHumi.fromJson(json);
@@ -81,15 +82,41 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: !isLoaded
-            ? CircularProgressIndicator()
-            : Text(
-                '${dht.humi.toStringAsFixed(2)}',
-                style: TextStyle(fontSize: 60, color: Colors.red),
-              ),
-      ),
+          child: !isLoaded
+              ? CircularProgressIndicator()
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: [
+                        Text('Nhiệt độ: ',
+                            style: TextStyle(fontSize: 50, color: Colors.blue)),
+                        Text(
+                          '${dht.tempC.toStringAsFixed(1)}',
+                          style: TextStyle(fontSize: 50, color: Colors.blue),
+                        ),
+                        Text(
+                          '°C',
+                          style: TextStyle(fontSize: 30, color: Colors.blue),
+                        )
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Text('Độ ẩm: ',
+                            style: TextStyle(fontSize: 50, color: Colors.blue)),
+                        Text(
+                          '${dht.humi.toStringAsFixed(1)}',
+                          style: TextStyle(fontSize: 50, color: Colors.blue),
+                        ),
+                        Text(
+                          ' %',
+                          style: TextStyle(fontSize: 20, color: Colors.blue),
+                        )
+                      ],
+                    )
+                  ],
+                )),
     );
   }
 }
-
-// {'temp':'36.000','humidity':'36.000%','heat':'36.000'}
