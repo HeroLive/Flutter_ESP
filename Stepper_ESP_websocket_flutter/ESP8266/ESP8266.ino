@@ -92,40 +92,40 @@ void StepperEvent(String json) {
     return;
   }
   long target = StepperDoc["position"];
-  long newPositon = target * stepsPerUnit;
+  long newPosition = target * stepsPerUnit;
   speed = StepperDoc["speed"];
   Serial.print("Move from ");
-  Serial.print(position/stepsPerUnit);
+  Serial.print(position / stepsPerUnit);
   Serial.print(" to ");
   Serial.println(target);
 
-  step_delay = 1000L * 1000L / stepsPerUnit / speed;
-  if (newPositon > position) {
+  step_delay = 60 * 1000L * 1000L / stepsPerUnit / speed;
+  if (newPosition > position) {
     digitalWrite(dir, dir_status);
-  } else if (newPositon < position) {
+  } else if (newPosition < position) {
     digitalWrite(dir, !dir_status);
   } else {
     return;
   }
-  //  for (long i = 0; i < abs(target - position) * stepsPerUnit; i++) {
-  //    digitalWrite(pul, HIGH);
-  //    digitalWrite(pul, LOW);
-  //    delayMicroSeconds
-  //    Serial.println(i);
-  //  }
-  long counter = 0;
-  while (position != newPositon)
-  {
-    unsigned long now = micros();
-    if (now - last_step_time >= step_delay)
-    {
-      last_step_time = now;
-      digitalWrite(pul, HIGH);
-      digitalWrite(pul, LOW);
-      position = (position < newPositon) ? position + 1 : position - 1;
-//      counter++;
-//      Serial.println(counter);
-    }
+  for (long i = 0; i < abs(newPosition - position); i++) {
+    digitalWrite(pul, HIGH);
+    digitalWrite(pul, LOW);
+    delayMicroseconds(step_delay);
+//    Serial.println(i);
   }
+  position = newPosition;
+  long counter = 0;
+  //  while (position != newPosition)
+  //  {
+  //    if (micros() - last_step_time >= step_delay)
+  //    {
+  //      last_step_time = micros();
+  //      digitalWrite(pul, HIGH);
+  //      digitalWrite(pul, LOW);
+  //      position = (position < newPosition) ? position + 1 : position - 1;
+  ////      counter++;
+  ////      Serial.println(counter);
+  //    }
+  //  }
   Serial.println("on target");
 }

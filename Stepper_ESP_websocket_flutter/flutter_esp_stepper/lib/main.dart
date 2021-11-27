@@ -82,7 +82,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          String s = '{"speed": 2, "position": 0}';
+          String s = '{"speed": 60, "position": 0}';
           channel.sink.add(s);
         },
         child: Icon(Icons.add),
