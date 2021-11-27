@@ -107,25 +107,29 @@ void StepperEvent(String json) {
   } else {
     return;
   }
+  /*
   for (long i = 0; i < abs(newPosition - position); i++) {
     digitalWrite(pul, HIGH);
     digitalWrite(pul, LOW);
     delayMicroseconds(step_delay);
-//    Serial.println(i);
+    //    Serial.println(i);
+    yield();
   }
   position = newPosition;
+  */
   long counter = 0;
-  //  while (position != newPosition)
-  //  {
-  //    if (micros() - last_step_time >= step_delay)
-  //    {
-  //      last_step_time = micros();
-  //      digitalWrite(pul, HIGH);
-  //      digitalWrite(pul, LOW);
-  //      position = (position < newPosition) ? position + 1 : position - 1;
-  ////      counter++;
-  ////      Serial.println(counter);
-  //    }
-  //  }
+  while (position != newPosition)
+  {
+    if (micros() - last_step_time >= step_delay)
+    {
+      last_step_time = micros();
+      digitalWrite(pul, HIGH);
+      digitalWrite(pul, LOW);
+      position = (position < newPosition) ? position + 1 : position - 1;
+      //      counter++;
+      //      Serial.println(counter);
+    }
+    yield();
+  }
   Serial.println("on target");
 }
