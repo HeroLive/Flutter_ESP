@@ -35,6 +35,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   bool isLoaded = false;
   String msg = '';
+  double pos = 0;
+  double speed = 10;
   final channel = IOWebSocketChannel.connect(esp_url);
   @override
   void initState() {
@@ -71,22 +73,59 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: !isLoaded
-            ? const CircularProgressIndicator()
-            : Row(
-                children: [
-                  Text('Move to ',
-                      style: TextStyle(fontSize: 50, color: Colors.blue)),
-                ],
-              ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          String s = '{"speed": 60, "position": 60}';
-          channel.sink.add(s);
-        },
-        child: Icon(Icons.add),
-      ),
+          child: !isLoaded
+              ? const CircularProgressIndicator()
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ' Position (r)',
+                          style: TextStyle(fontSize: 20),
+                        ),
+                        Slider(
+                          min: -10,
+                          max: 10,
+                          value: pos,
+                          divisions: 20,
+                          label: '${pos.round()}',
+                          onChanged: (value) {
+                            setState(() {
+                              pos = value;
+                            });
+                          },
+                        ),
+                        Padding(padding: EdgeInsets.all(8)),
+                        Text(' Speed (rpm)', style: TextStyle(fontSize: 20)),
+                        Slider(
+                          activeColor: Colors.orange,
+                          min: 0,
+                          max: 240,
+                          value: speed,
+                          divisions: 24,
+                          label: '${speed.round()}',
+                          onChanged: (value) {
+                            setState(() {
+                              speed = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        String s =
+                            '{"speed": ${speed.round()}, "position": ${pos.round()}}';
+                        channel.sink.add(s);
+                        print(s);
+                      },
+                      child: Text('Move'),
+                    )
+                  ],
+                )),
     );
   }
 }
